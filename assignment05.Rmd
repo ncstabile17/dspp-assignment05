@@ -32,7 +32,7 @@ dc_permits_2020 <-
 
 ```
 
-## Filtering the data to construction permits within six months of today
+## Filtering data to construction permits within six months of today
 
 ```{r}
 
