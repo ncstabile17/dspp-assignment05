@@ -12,6 +12,8 @@ library(tidyverse)
 library(haven)
 library(stringr)
 library(lubridate)
+library(sf)
+library(gridExtra)
 ```
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
@@ -30,15 +32,33 @@ dc_permits_2020 <-
 
 ```
 
-## Filtering the data to permits within six months of today
+## Filtering the data to construction permits within six months of today
 
 ```{r}
 
-# Need to remove extraneous time information before selecting particular dates
-str_remove(dc_permits_2020$issue_date, " 00:00:00+00")
+dc_permits_recent_construction <- dc_permits_2020 %>% 
+  filter(!is.na(latitude) & !is.na(longitude)) %>% 
+  filter(permit_type_name == "CONSTRUCTION") %>% 
+  filter(issue_date > today() - months(6))
 
-  
+table(month(dc_permits_recent_construction$issue_date))
+min(dc_permits_recent_construction$issue_date)
 
+```
+##  Convert Lat/Lon to Points Geometry
+
+```{r}
+
+dc_permits_recent_construction <- st_as_sf(
+  dc_permits_recent_construction,
+  coords = c("longitude", "latitude"),
+  crs = 4326,
+  remove = FALSE)
+
+ggplot(data = dc_permits_recent_construction) +
+  geom_sf(aes(color = permit_subtype_name == "NEW BUILDING")) +
+  scale_colour_manual(name = 'New Building', values = setNames(c('blue','red'),c(T, F))) +
+  theme_void()
 
 ```
 
