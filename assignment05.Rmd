@@ -16,8 +16,6 @@ library(sf)
 library(gridExtra)
 ```
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
 ## Data Loading & Cleaning
 
 ```{r}
@@ -28,7 +26,8 @@ dc_permits_2020 <-
                               LATITUDE = col_character(),
                               LONGITUDE = col_character()
                             )) %>% 
-  rename_with(tolower)
+  rename_with(tolower) %>% 
+  mutate(address_id = as.character(maraddressrepositoryid))
 
 ```
 
@@ -59,6 +58,32 @@ ggplot(data = dc_permits_recent_construction) +
   geom_sf(aes(color = permit_subtype_name == "NEW BUILDING")) +
   scale_colour_manual(name = 'New Building', values = setNames(c('blue','red'),c(T, F))) +
   theme_void()
+
+```
+
+##  Load Census Tracts, Perform a Spatial Join, and Create Choropleth
+
+```{r}
+
+dc_tracts <- st_read("data/Census_Tracts_in_2010.shp") %>% 
+  select(TRACT, GEOID, geometry)
+
+# Permit data doesn't have tract or geoID information, adding additional data source
+dc_addresses <- st_read("data/Address_Points.csv") %>% 
+  select(address_id = ADDRESS_ID, TRACT = CENSUS_TRACT)
+
+dc_permits_recent_construction <- 
+  left_join(dc_permits_recent_construction, dc_addresses, by = "address_id")
+
+# spatial join, now we've merged all three data sets!
+dc_permits_merged <- st_join(
+  dc_permits_recent_construction, # points
+  dc_tracts, # polygons
+  join = st_within
+)
+  
+
+
 
 ```
 
