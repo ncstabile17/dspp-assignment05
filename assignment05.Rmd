@@ -68,6 +68,10 @@ ggplot(data = dc_permits_recent_construction) +
 dc_tracts <- st_read("data/Census_Tracts_in_2010.shp") %>% 
   select(TRACT, GEOID, geometry)
 
+ggplot() +
+  geom_sf(data = dc_tracts)
+
+
 # Permit data doesn't have tract or geoID information, adding additional data source
 dc_addresses <- st_read("data/Address_Points.csv") %>% 
   select(address_id = ADDRESS_ID, TRACT = CENSUS_TRACT)
@@ -75,15 +79,28 @@ dc_addresses <- st_read("data/Address_Points.csv") %>%
 dc_permits_recent_construction <- 
   left_join(dc_permits_recent_construction, dc_addresses, by = "address_id")
 
-# spatial join, now we've merged all three data sets!
 dc_permits_merged <- st_join(
   dc_permits_recent_construction, # points
   dc_tracts, # polygons
   join = st_within
 )
-  
 
+dc_permits_merged <- st_set_geometry(dc_permits_merged, NULL)
+dc_permits_agg <- dc_permits_merged %>%
+  group_by(GEOID) %>%
+  summarize(
+    num_new = sum(permit_subtype_name == "NEW BUILDING"),
+    permit_count = n(),
+    rate_new = num_new/permit_count
+  )
 
+dc_permits_agg <- dc_tracts %>%
+  left_join(dc_permits_agg, by = "GEOID")
+
+ggplot(data = dc_permits_agg) +
+  geom_sf(aes(fill = permit_count, color = rate_new)) + 
+  scale_color_distiller(palette = "YlGnBu") +
+  theme_void()
 
 ```
 
