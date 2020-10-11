@@ -14,6 +14,9 @@ library(stringr)
 library(lubridate)
 library(sf)
 library(gridExtra)
+library(tidycensus)
+library(httr)
+library(jsonlite)
 ```
 
 ## Data Loading & Cleaning
@@ -100,3 +103,63 @@ ggplot(data = dc_permits_merged_agg) +
 
 ```
 
+## Using the Census API
+
+```{r}
+ census_key <- read_file("data/census_api_key.txt")
+
+# census_api_key(census_key, install = TRUE, overwrite = TRUE)
+
+```
+
+```{r}
+
+# Exploring the ACS variables
+vars <-load_variables(2017, "acs5")
+
+# Using pivot wider for easier comparison later
+dc_acs_tidy_data <- get_acs(
+  geography = "tract",
+  variables = c(hh_income = "B19001_001", education = "B15003_001", poverty = "B17001_001"),
+  state = "DC",
+  year = 2017
+) %>% 
+  pivot_wider(names_from = variable, values_from = c(estimate, moe))
+
+url <- str_glue(
+  "https://api.census.gov/data/2017/acs/acs5?get=NAME,B19001_001E,B15003_001E,B17001_001E&for=tract:*&in=state:11&key={census_key}"
+)
+
+# get JSON version on Census data from API
+dc_acs_json <-GET(url = url, user_agent("Georgetown Univ. Student Data Collector (ncs31@georgetown.edu)."))
+http_status(dc_acs_json)
+
+# get the text of the JSON
+dc_acs_json <-content(dc_acs_json, as = "text")
+
+# convert to character matrix from JSON
+dc_acs_matrix <-fromJSON(dc_acs_json)
+
+# convert data to tibble ignoring top row which are the variable names
+dc_acs_api_data <-as_tibble(dc_acs_matrix[2:nrow(dc_acs_matrix), ],.name_repair = "minimal")
+
+# add variable names to the tibble
+names(dc_acs_api_data) <- dc_acs_matrix[1, ]
+
+# trimming columns for comparison
+dc_acs_tidy_data <- dc_acs_tidy_data %>% 
+  select(NAME, estimate_education, estimate_poverty, estimate_hh_income)
+
+# Transformations for comparison
+dc_acs_api_data <- dc_acs_api_data %>% 
+  select(NAME, B19001_001E, B15003_001E, B17001_001E) %>% 
+  rename(estimate_education = B15003_001E, 
+         estimate_poverty = B17001_001E, 
+         estimate_hh_income = B19001_001E) %>% 
+  mutate(estimate_education = as.numeric(estimate_education),
+         estimate_poverty = as.numeric(estimate_poverty),
+         estimate_hh_income = as.numeric(estimate_hh_income))
+
+all_equal(dc_acs_tidy_data, dc_acs_api_data)
+
+```
