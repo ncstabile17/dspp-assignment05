@@ -1,0 +1,3 @@
+# APIs and Geospatial Analysis | Data Science for Public Policy 
+
+This analysis uses R's tidyverse and related packages to produce a geospatial analysis with data pulled from the [Census American Community Survey](https://www.census.gov/data/developers/data-sets/acs-5year.html) and [DC Open Data](https://opendata.dc.gov/). I plot building permit construction data from the last 6 months for Census tracts in Washington, DC and find that overall construction permit counts have been highest in central parts of the District while the ratio of new buildings has been highest in Census tracts east of the Anacostia River.
