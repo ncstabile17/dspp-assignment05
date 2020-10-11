@@ -1,10 +1,9 @@
 ---
 title: "Assignment 05"
 author: "Nick Stabile"
-date: "10/8/2020"
+date: "10/11/2020"
 output: html_document
 ---
-# Todo: Write an informative README.md file
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -187,7 +186,7 @@ ggplot(data = acs_map_data) +
   
 }
 
-# make_acs_map(2017, "B15003_001", 11, 1)
+make_acs_map(2017, "B15003_001", 11, 1)
 
 ```
 
