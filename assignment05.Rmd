@@ -98,7 +98,12 @@ dc_permits_merged_agg <- dc_tracts %>%
   left_join(dc_permits_merged_agg, by = "GEOID")
 
 ggplot(data = dc_permits_merged_agg) +
-  geom_sf(aes(fill = permit_count, color = ratio_new)) + 
+  geom_sf(aes(fill = permit_count)) + 
+  scale_color_distiller(palette = "YlGnBu") +
+  theme_void()
+
+ggplot(data = dc_permits_merged_agg) +
+  geom_sf(aes(fill = ratio_new)) + 
   scale_color_distiller(palette = "YlGnBu") +
   theme_void()
 
@@ -186,7 +191,8 @@ ggplot(data = acs_map_data) +
   
 }
 
-make_acs_map(2017, "B15003_001", 11, 1)
+# mapping median gross rent 
+make_acs_map(2018, "B25064_001", 11, 1)
 
 ```
 
